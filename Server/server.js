@@ -4,6 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { supabase } from "../src/supabaseclient.js"; // Adjust if needed
 import Post from "./models/Post.js";
+import Profile from "./models/Profile.js"; // Add this at the top
+
 
 dotenv.config();
 
@@ -107,6 +109,48 @@ app.put("/api/posts/:id/save", async(req,res)=>{
             console.error("❌ Failed to save the post:", err);
         }
 })
+
+
+
+//  to fetch the profile
+
+app.get("/api/profile",verifySupabaseJWT, async (req,res) => {
+    try{
+    const profile = await Profile.findOne({ supabase_id: req.user.id });
+    if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+    }
+    else{
+        res.json(profile);
+    }
+    } catch{
+        console.error("aFailed to fetch the profile")
+        res.status(400).json({
+            error: "Failed to fetch the profile"
+        }
+    )
+    }
+    
+});
+
+//  to edit  the profile
+
+app.put("/api/profile", verifySupabaseJWT, async (req, res) => {
+    try {
+      const updates = req.body;
+      const profile = await Profile.findOneAndUpdate(
+        { supabase_id: req.user.id },
+        updates,
+        { new: true, upsert: true } // creates doc if not found
+      );
+      res.json(profile);
+    } catch (err) {
+      console.error("❌ Failed to update profile:", err);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+
 
 
 
