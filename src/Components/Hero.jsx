@@ -250,6 +250,7 @@ function Hero() {
             />
           </div>
           <div className="postingin1">
+            <div className="postic">
             <div className="coder">
               <i className="fas fa-code icon"></i>
               <span>Code</span>
@@ -262,9 +263,12 @@ function Hero() {
               <i className="fas fa-link icon"></i>
               <span>Link</span>
             </div>
+            </div>
+            <div>
             <button className="post" onClick={Submitpost} disabled={posting}>
               {posting ? "Posting..." : "Post"}
             </button>
+            </div>
           </div>
         </div>
 
