@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Sidebar = ({ isSidebarOpen }) => {
   return (
@@ -7,10 +8,12 @@ const Sidebar = ({ isSidebarOpen }) => {
         <nav className="nav-content">
           <ul className="nav1-list">
             <li>
+            <Link to="/" className="link">
               <button className="nav1-button active">
                 <i className="fas fa-home icon"></i>
                 <span>Home</span>
               </button>
+              </Link>
             </li>
             <li>
               <button className="nav1-button">

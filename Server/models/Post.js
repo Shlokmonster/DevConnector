@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 
 const PostSchema = new mongoose.Schema({
-  content: { type: String, required: true },
+  content: { type: String, default: "" },
+  codeSnippet: { type: String, default: "" },
+  language: { type: String, default: "" },
   userId: { type: String, required: true },
   email: { type: String },
   name: { type: String },

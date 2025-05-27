@@ -1074,5 +1074,70 @@ display: flex;
   border: 0;
 }
 
-/*  profile */
+/*  code editor css */
 
+/* Code editor container */
+.code-editor {
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+/* Language label */
+.code-editor p {
+  color: #999;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Code textarea */
+.code-textarea {
+  width: 100%;
+  background-color: #151515;
+  color: #f8f8f8;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-family: monospace;
+  font-size: 0.95rem;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+/* Code preview title */
+.code-editor h4 {
+  color: #ccc;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+/* Syntax highlighter block */
+pre {
+  background-color: #1e1e1e !important;
+  border-radius: 8px;
+  padding: 1rem !important;
+  font-size: 0.95rem;
+  overflow-x: auto;
+}
+
+/* Ensure line height is readable */
+pre code {
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .code-editor {
+    padding: 0.75rem;
+  }
+
+  .code-textarea {
+    font-size: 0.85rem;
+  }
+
+  .code-editor h4 {
+    font-size: 0.95rem;
+  }
+}

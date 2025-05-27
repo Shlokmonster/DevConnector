@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseclient";
 import { Link } from "react-router-dom";
+
 import Profile from "../pages/Profile";
 
 
 
 function Navbar() {
     const [user, setUser] = useState(null);
+    const [formData, setFormData] = useState({
+        username: "",
+        bio: "",
+        avatar: ""
+      });
     useEffect(() => {
         // Get current session
         supabase.auth.getSession().then(({ data }) => {
@@ -20,8 +26,33 @@ function Navbar() {
 
         return () => {
             listener.subscription.unsubscribe();
+            profile(); 
         };
     }, []);
+
+
+    //  getting the profile photo
+
+  const profile = async () => {
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session.access_token;
+
+      const res = await fetch("http://localhost:8080/api/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      setFormData({
+        username: data.username || "",
+        bio: data.bio || "",
+        avatar: data.avatar || "",
+      });
+    } catch (error) {
+      console.error("Failed to load profile:", error);
+    }
+  };
+
 
     return (
         <div>
@@ -38,9 +69,7 @@ function Navbar() {
                 <div className="account">
                     {user ? (
                         <Link to="/Profile"> 
-                        <img
-                            src="https://readdy.ai/api/search-image?query=professional%20headshot%20of%20a%20young%20software%20developer%20with%20short%20dark%20hair%20and%20glasses%2C%20minimalist%20background%2C%20high%20quality%20professional%20portrait%2C%20studio%20lighting&width=100&height=100&seq=avatar1&orientation=squarish"
-                            alt="User Avatar"
+                        <img src ={formData.avatar || "https://readdy.ai/api/search-image?query=professional%20headshot%20developer"}
                             className="accimg"
                         />
                         </Link>

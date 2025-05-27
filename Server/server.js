@@ -2,10 +2,9 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-import { supabase } from "../src/supabaseclient.js"; // Adjust if needed
+import { supabase } from "../src/supabaseclient.js"; // Adjust path as needed
 import Post from "./models/Post.js";
-import Profile from "./models/Profile.js"; // Add this at the top
-
+import Profile from "./models/Profile.js";
 
 dotenv.config();
 
@@ -33,7 +32,7 @@ const Connectdb = async () => {
   }
 };
 
-// Verify Supabase JWT
+// Verify Supabase JWT middleware
 const verifySupabaseJWT = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: "Unauthorized" });
@@ -50,14 +49,23 @@ const verifySupabaseJWT = async (req, res, next) => {
 // Create post
 app.post("/api/posts", verifySupabaseJWT, async (req, res) => {
   try {
-    const { content } = req.body;
-    if (!content) return res.status(400).json({ error: "Content is required" });
+    const { content, codeSnippet, language } = req.body;
+
+    if (!content && !codeSnippet) {
+      return res.status(400).json({ error: "Post must contain content or code" });
+    }
 
     const post = new Post({
-      content,
+      content: content || "",
+      codeSnippet: codeSnippet || "",
+      language: language || "",
       userId: req.user.id,
       email: req.user.email,
       name: req.user.user_metadata?.name || req.user.email,
+      createdAt: new Date(),
+      liked: false,
+      likes: 0,
+      saved: false,
     });
 
     await post.save();
@@ -68,7 +76,7 @@ app.post("/api/posts", verifySupabaseJWT, async (req, res) => {
   }
 });
 
-// Get posts
+// Get all posts
 app.get("/api/posts", async (req, res) => {
   try {
     const posts = await Post.find().sort({ createdAt: -1 });
@@ -79,81 +87,67 @@ app.get("/api/posts", async (req, res) => {
   }
 });
 
-// to count the likes in the database
-
-app.put("/api/posts/:id/like", async(req,res)=>{
-    try{
-        const {liked ,likes} = req.body;
-        const post = await Post.findByIdAndUpdate(
-            req.params.id,
-            {liked ,likes},
-            {new:true}
-        );
-        res.json(post)
-        }catch(err){
-            console.error("❌ Failed to like post:", err);
-        }
-})
-
-//  saving the post to the database
-app.put("/api/posts/:id/save", async(req,res)=>{
-    try{
-        const {saved} = req.body;
-        const post = await Post.findByIdAndUpdate(
-            req.params.id,
-            {saved},
-            {new:true}
-        );
-        res.json(post)
-        }catch(err){
-            console.error("❌ Failed to save the post:", err);
-        }
-})
-
-
-
-//  to fetch the profile
-
-app.get("/api/profile",verifySupabaseJWT, async (req,res) => {
-    try{
-    const profile = await Profile.findOne({ supabase_id: req.user.id });
-    if (!profile) {
-        return res.status(404).json({ error: "Profile not found" });
-    }
-    else{
-        res.json(profile);
-    }
-    } catch{
-        console.error("aFailed to fetch the profile")
-        res.status(400).json({
-            error: "Failed to fetch the profile"
-        }
-    )
-    }
-    
+// Like a post
+app.put("/api/posts/:id/like", async (req, res) => {
+  try {
+    const { liked, likes } = req.body;
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { liked, likes },
+      { new: true }
+    );
+    res.json(post);
+  } catch (err) {
+    console.error("❌ Failed to like post:", err);
+    res.status(500).json({ error: "Failed to like post" });
+  }
 });
 
-//  to edit  the profile
+// Save a post
+app.put("/api/posts/:id/save", async (req, res) => {
+  try {
+    const { saved } = req.body;
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { saved },
+      { new: true }
+    );
+    res.json(post);
+  } catch (err) {
+    console.error("❌ Failed to save the post:", err);
+    res.status(500).json({ error: "Failed to save the post" });
+  }
+});
 
-app.put("/api/profile", verifySupabaseJWT, async (req, res) => {
-    try {
-      const updates = req.body;
-      const profile = await Profile.findOneAndUpdate(
-        { supabase_id: req.user.id },
-        updates,
-        { new: true, upsert: true } // creates doc if not found
-      );
-      res.json(profile);
-    } catch (err) {
-      console.error("❌ Failed to update profile:", err);
-      res.status(500).json({ error: "Server error" });
+// Get profile
+app.get("/api/profile", verifySupabaseJWT, async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ supabase_id: req.user.id });
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
     }
-  });
+    res.json(profile);
+  } catch (err) {
+    console.error("❌ Failed to fetch the profile:", err);
+    res.status(500).json({ error: "Failed to fetch the profile" });
+  }
+});
 
-
-
-
-
+// Update or create profile
+app.put("/api/profile", verifySupabaseJWT, async (req, res) => {
+  try {
+    const updates = req.body;
+    const profile = await Profile.findOneAndUpdate(
+      { supabase_id: req.user.id },
+      updates,
+      { new: true, upsert: true }
+    );
+    res.json(profile);
+  } catch (err) {
+    console.error("❌ Failed to update profile:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 // Ping route
 app.get("/", (req, res) => {
