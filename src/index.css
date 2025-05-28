@@ -311,6 +311,142 @@ body {
   margin-bottom: 16px;
 }
 
+/* Post Item Styling */
+.post-item {
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.post-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.post-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.post-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-username {
+  font-weight: 600;
+  font-size: 15px;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+.post-time {
+  font-size: 12px;
+  color: #888;
+  margin: 2px 0 0;
+}
+
+.post-content {
+  margin: 12px 0;
+  color: #e0e0e0;
+  line-height: 1.6;
+}
+
+.post-text {
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.post-image-container {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 100%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.post-image-container:hover {
+  transform: scale(1.01);
+}
+
+.post-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background-color: #121212;
+}
+
+.code-snippet-container {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.post-engagement {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #2d2d2d;
+  margin-top: 12px;
+}
+
+.engagement-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.engagement-btn, .save-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.engagement-btn:hover {
+  background: #2d2d2d;
+  color: #e0e0e0;
+}
+
+.engagement-btn.liked {
+  color: #ff4d4d;
+}
+
+.save-btn.saved {
+  color: #4a90e2;
+}
+
+/* Post Creation Form */
 .postingin .accimg {
   width: 44px;
   height: 44px;

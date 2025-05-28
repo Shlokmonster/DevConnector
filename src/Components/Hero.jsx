@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { supabase } from "../supabaseclient";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
 import hljs from "highlight.js/lib/common";
 
-// Individual Post Component
-const PostItem = ({ post }) => {
+// PostItem Component
+const PostItem = ({ post, fetchPosts }) => {
   const [liked, setLiked] = useState(post.liked || false);
   const [saved, setSaved] = useState(post.saved || false);
   const [likes, setLikes] = useState(post.likes || 0);
@@ -15,7 +15,6 @@ const PostItem = ({ post }) => {
   const handleLike = async () => {
     const newLiked = !liked;
     const newLikes = newLiked ? likes + 1 : likes - 1;
-
     setLiked(newLiked);
     setLikes(newLikes);
 
@@ -25,7 +24,6 @@ const PostItem = ({ post }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ liked: newLiked, likes: newLikes }),
       });
-
       if (!response.ok) {
         setLiked(!newLiked);
         setLikes(newLiked ? likes - 1 : likes + 1);
@@ -41,14 +39,12 @@ const PostItem = ({ post }) => {
   const handleSave = async () => {
     const newSaved = !saved;
     setSaved(newSaved);
-
     try {
       const response = await fetch(`http://localhost:8080/api/posts/${post._id}/save`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ saved: newSaved }),
       });
-
       if (!response.ok) {
         setSaved(!newSaved);
         console.error('Failed to update save');
@@ -63,10 +59,38 @@ const PostItem = ({ post }) => {
     const now = new Date();
     const postDate = new Date(dateString);
     const diffInMinutes = Math.floor((now - postDate) / (1000 * 60));
-
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
+
+  const deletePost = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+
+      if (!session) {
+        alert("You must be logged in!");
+        return;
+      }
+
+      const res = await fetch(`http://localhost:8080/api/posts/${post._id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (res.ok) {
+        alert("Post deleted!");
+        fetchPosts(); // Refresh posts
+      } else {
+        alert("Failed to delete post");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete post");
+    }
   };
 
   return (
@@ -87,17 +111,42 @@ const PostItem = ({ post }) => {
             </p>
           </div>
         </div>
-        <button className="post-menu-btn">
-          <MoreHorizontal size={20} />
+        <button onClick={deletePost} className="engagement-btn">
+          DELETE
         </button>
       </div>
 
       <div className="post-content">
-        <p>{post.content}</p>
+        {post.content && <p className="post-text">{post.content}</p>}
+        {post.imageUrl && (
+          <div className="post-image-container">
+            <img 
+              src={post.imageUrl} 
+              alt="Post content" 
+              className="post-image"
+              onClick={() => window.open(post.imageUrl, '_blank')}
+            />
+          </div>
+        )}
         {post.codeSnippet && (
-          <SyntaxHighlighter language={post.language || "javascript"} style={tomorrow}>
-            {post.codeSnippet}
-          </SyntaxHighlighter>
+          <div className="code-snippet-container">
+            <SyntaxHighlighter 
+              language={post.language || "javascript"} 
+              style={tomorrow}
+              customStyle={{
+                margin: 0,
+                borderRadius: '8px',
+                fontSize: '14px',
+                backgroundColor: '#1e1e1e',
+                padding: '12px',
+                overflowX: 'auto'
+              }}
+              wrapLines={true}
+              wrapLongLines={true}
+            >
+              {post.codeSnippet}
+            </SyntaxHighlighter>
+          </div>
         )}
       </div>
 
@@ -107,13 +156,11 @@ const PostItem = ({ post }) => {
             <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
             <span>{likes}</span>
           </button>
-
           <button className="engagement-btn">
             <MessageCircle size={18} />
             <span>{comments}</span>
           </button>
         </div>
-
         <button onClick={handleSave} className={`save-btn ${saved ? 'saved' : ''}`}>
           <Bookmark size={18} fill={saved ? 'currentColor' : 'none'} />
         </button>
@@ -122,6 +169,7 @@ const PostItem = ({ post }) => {
   );
 };
 
+// Hero Component
 function Hero() {
   const [user, setUser] = useState(null);
   const [content, setContent] = useState("");
@@ -131,12 +179,13 @@ function Hero() {
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [codeSnippet, setCodeSnippet] = useState("");
   const [language, setLanguage] = useState("plaintext");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     const getUser = async () => {
       setUser({ user_metadata: { name: formData.username } });
     };
-
     getUser();
     profile();
     fetchPosts();
@@ -174,15 +223,60 @@ function Hero() {
       const res = await fetch("http://localhost:8080/api/posts");
       if (!res.ok) throw new Error("Failed to fetch posts");
       const data = await res.json();
-      setPosts(data);
+      // Ensure posts is an array before setting state
+      if (Array.isArray(data)) {
+        // Sort posts by creation date (newest first)
+        const sortedPosts = [...data].sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setPosts(sortedPosts);
+      } else {
+        console.error('Invalid posts data:', data);
+        setPosts([]);
+      }
     } catch (error) {
       console.error("Error fetching posts:", error);
+      // Set to empty array on error to prevent undefined errors
+      setPosts([]);
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (jpg, jpeg, png, webp)');
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+      
+      setImageFile(file);
+      
+      // Create image preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    // Reset the file input
+    document.getElementById('image-upload').value = '';
+  };
+
   const Submitpost = async () => {
-    if (!content.trim() && !codeSnippet.trim()) {
-      alert("Please write something or add code first");
+    if (!content.trim() && !codeSnippet.trim() && !imageFile) {
+      alert("Please write something, add code, or upload an image");
       return;
     }
 
@@ -197,36 +291,49 @@ function Hero() {
     }
 
     try {
+      // Create FormData object
+      const formData = new FormData();
+      
+      // Add text fields
+      if (content) formData.append('content', content);
+      if (codeSnippet) {
+        formData.append('codeSnippet', codeSnippet);
+        formData.append('language', language);
+      }
+      
+      // Add image file if exists
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
       const res = await fetch("http://localhost:8080/api/posts", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
+          // Don't set Content-Type header when using FormData
+          // The browser will set it automatically with the correct boundary
         },
-        body: JSON.stringify({ 
-          content,
-          codeSnippet,
-          language,
-          likes: 0,
-          comments: 0,
-          liked: false,
-          saved: false
-        }),
+        body: formData,
       });
 
       const result = await res.json();
 
       if (res.ok) {
-        alert("Post created!");
+        alert("Post created successfully!");
+        // Reset form
         setContent("");
         setCodeSnippet("");
+        setImageFile(null);
+        setImagePreview(null);
+        document.getElementById('image-upload').value = '';
+        // Refresh posts
         fetchPosts();
       } else {
-        alert(result.error || "Something went wrong!");
+        alert(result.error || "Failed to create post. Please try again.");
       }
     } catch (err) {
-      console.error(err);
-      alert("Failed to post");
+      console.error("Error creating post:", err);
+      alert("Failed to create post. Please check your connection and try again.");
     }
 
     setPosting(false);
@@ -236,14 +343,14 @@ function Hero() {
     <div>
       <div className="her1">
         <div className="heading">
-          {user ? `Welcome back, ${formData.username || user.email}!` : "Welcome back, User"}
+          {user ? `Welcome back, ${formData.username || user.email || "User"}!` : "Welcome back, User"}
         </div>
-        <div className="date">Monday, May 27, 2025</div>
+        <div className="date">Monday, May 28, 2025</div>
 
         <div className="posting">
           <div className="postingin">
             <img
-              src={formData.avatar || "https://readdy.ai/api/search-image?query=professional%20headshot%20developer"}
+              src={formData.avatar || "https://readdy.ai/api/search-image?query=professional%20headshot%20of%20a%20young%20software%20developer"}
               alt=""
               className="accimg"
             />
@@ -262,8 +369,17 @@ function Hero() {
                 <span>Code</span>
               </div>
               <div className="image">
-                <i className="fas fa-image icon"></i>
-                <span>Image</span>
+                <label htmlFor="image-upload">
+                  <i className="fas fa-image icon"></i>
+                  <span>Image</span>
+                </label>
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/jpeg, image/png, image/webp, image/jpg"
+                  style={{ display: "none" }}
+                  onChange={handleImageChange}
+                />
               </div>
               <div className="link">
                 <i className="fas fa-link icon"></i>
@@ -277,6 +393,42 @@ function Hero() {
             </div>
           </div>
         </div>
+
+        {imagePreview && (
+          <div className="image-preview-container" style={{ margin: '15px 0', position: 'relative' }}>
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '300px', 
+                borderRadius: '8px',
+                border: '1px solid #ddd'
+              }} 
+            />
+            <button 
+              onClick={removeImage}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'rgba(0,0,0,0.6)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '25px',
+                height: '25px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px'
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {showCodeEditor && (
           <div className="code-editor">
@@ -300,7 +452,9 @@ function Hero() {
           {posts.length === 0 ? (
             <p>No posts yet. Be the first to post!</p>
           ) : (
-            posts.map((post) => <PostItem key={post._id} post={post} />)
+            posts.map((post) => (
+              <PostItem key={post._id} post={post} fetchPosts={fetchPosts} />
+            ))
           )}
         </div>
       </div>

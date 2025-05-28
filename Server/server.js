@@ -5,6 +5,9 @@ import dotenv from "dotenv";
 import { supabase } from "../src/supabaseclient.js"; // Adjust path as needed
 import Post from "./models/Post.js";
 import Profile from "./models/Profile.js";
+import { parser } from "./middlewares/upload.js";
+
+
 
 dotenv.config();
 
@@ -21,10 +24,7 @@ app.use(express.json());
 // Connect to MongoDB
 const Connectdb = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB connected");
   } catch (err) {
     console.error("❌ MongoDB connection error:", err);
@@ -47,18 +47,28 @@ const verifySupabaseJWT = async (req, res, next) => {
 };
 
 // Create post
-app.post("/api/posts", verifySupabaseJWT, async (req, res) => {
+app.post("/api/posts", verifySupabaseJWT, parser.single("image"), async (req, res) => {
   try {
     const { content, codeSnippet, language } = req.body;
+    
+    // Check if any content is provided
+    if (!content && !codeSnippet && !req.file) {
+      return res.status(400).json({ error: "Post must contain content, code, or image" });
+    }
 
-    if (!content && !codeSnippet) {
-      return res.status(400).json({ error: "Post must contain content or code" });
+    // Get the image URL from Cloudinary
+    let imageUrl = "";
+    if (req.file) {
+      // The file is already uploaded to Cloudinary by multer-storage-cloudinary
+      // The file object will have a 'path' property with the Cloudinary URL
+      imageUrl = req.file.path;
     }
 
     const post = new Post({
       content: content || "",
       codeSnippet: codeSnippet || "",
       language: language || "",
+      imageUrl,
       userId: req.user.id,
       email: req.user.email,
       name: req.user.user_metadata?.name || req.user.email,
@@ -69,10 +79,23 @@ app.post("/api/posts", verifySupabaseJWT, async (req, res) => {
     });
 
     await post.save();
-    res.status(201).json({ message: "Post created", post });
+    res.status(201).json({ 
+      message: "Post created successfully", 
+      post: {
+        ...post._doc,
+        // Ensure the image URL is properly returned
+        imageUrl: imageUrl || post.imageUrl
+      } 
+    });
   } catch (err) {
     console.error("❌ Post creation failed:", err);
-    res.status(500).json({ error: "Failed to create post" });
+    // More specific error messages
+    if (err.message.includes('File too large')) {
+      return res.status(413).json({ error: "File size too large. Maximum size is 5MB." });
+    } else if (err.message.includes('Only image files are allowed')) {
+      return res.status(400).json({ error: "Only image files are allowed." });
+    }
+    res.status(500).json({ error: "Failed to create post. Please try again." });
   }
 });
 
@@ -116,6 +139,22 @@ app.put("/api/posts/:id/save", async (req, res) => {
   } catch (err) {
     console.error("❌ Failed to save the post:", err);
     res.status(500).json({ error: "Failed to save the post" });
+  }
+});
+
+//  delete the post 
+
+app.delete("/api/posts/:id", async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const post = await Post.findByIdAndDelete(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    res.json({ message: "Post deleted successfully" });
+  } catch (err) {
+    console.error("❌ Failed to delete the post:", err);
+    res.status(500).json({ error: "Failed to delete the post" });
   }
 });
 
