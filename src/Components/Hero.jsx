@@ -345,7 +345,7 @@ function Hero() {
         <div className="heading">
           {user ? `Welcome back, ${formData.username || user.email || "User"}!` : "Welcome back, User"}
         </div>
-        <div className="date">Monday, May 28, 2025</div>
+        <div className="date">Monday, May 30, 2025</div>
 
         <div className="posting">
           <div className="postingin">

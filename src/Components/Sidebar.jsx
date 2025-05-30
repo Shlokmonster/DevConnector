@@ -1,6 +1,25 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+
+
+const openOAuthPopup=()=>{
+  const url = "https://rhwmehproorvsztdxtcp.supabase.co/auth/v1/authorize?provider=github&redirect_to=http://localhost:3000/github-callback";
+  const width = 500;
+  const height = 600;
+  const left = window.screenX + (window.outerWidth - width) / 2;
+  const top = window.screenY + (window.outerHeight - height) / 2;
+
+  window.open(
+    url,
+     "GitHub OAuth",
+    `width=${width},height=${height},left=${left},top=${top}`
+  
+  );
+
+
+}
+
 const Sidebar = ({ isSidebarOpen }) => {
   return (
     <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
@@ -82,7 +101,7 @@ const Sidebar = ({ isSidebarOpen }) => {
             <p className="box-text">
               Sync your repositories and share your work
             </p>
-            <button className="connect-btn">
+            <button className="connect-btn" onClick={openOAuthPopup}>
               <i className="fab fa-github"></i> Connect
             </button>
           </div>
