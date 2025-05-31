@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 
 const openOAuthPopup=()=>{
-  const url = "https://rhwmehproorvsztdxtcp.supabase.co/auth/v1/authorize?provider=github&redirect_to=http://localhost:3000/github-callback";
+  const url = "https://rhwmehproorvsztdxtcp.supabase.co/auth/v1/authorize?provider=github&redirect_to=http://localhost:5173/github-callback";
   const width = 500;
   const height = 600;
   const left = window.screenX + (window.outerWidth - width) / 2;
@@ -49,10 +49,12 @@ const Sidebar = ({ isSidebarOpen }) => {
               </button>
             </li>
             <li>
+            <Link to="/github-repos" className="link">
               <button className="nav1-button">
                 <i className="fab fa-github icon"></i>
                 <span>GitHub Integration</span>
               </button>
+              </Link>
             </li>
             <li>
               <button className="nav1-button">
