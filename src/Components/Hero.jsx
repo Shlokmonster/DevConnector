@@ -350,7 +350,7 @@ function Hero() {
         <div className="posting">
           <div className="postingin">
             <img
-              src={formData.avatar || "https://readdy.ai/api/search-image?query=professional%20headshot%20of%20a%20young%20software%20developer"}
+              src={formData.avatar || "https://imgs.search.brave.com/GecKqDMq5WqnUSDr14taGskNvdh4LB59bE60yX639Gs/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/cGl4YWJheS5jb20v/cGhvdG8vMjAxOC8x/MC8yOS8yMS80Ni9o/dW1hbi0zNzgyMTg5/XzY0MC5qcGc"}
               alt=""
               className="accimg"
             />

@@ -9,6 +9,7 @@ import GitHubCallback from "./auth/GitHubCallback.jsx";
 import { useEffect } from "react";
 import { supabase } from "./supabaseclient";
 import GitHubRepos from "./pages/GithubRepo.jsx";
+import AllProfiles from "./pages/Devlopers.jsx";
 
 function App() {
 
@@ -94,6 +95,7 @@ useEffect(() => {
           <Route path="/Profile" element={<Profile />} />
           <Route path="/github-callback" element={<GitHubCallback />} />
           <Route path="/github-repos" element={<GitHubRepos />} />
+          <Route path="/all-profiles" element={<AllProfiles />} />
         </Routes>
       </div>
     </>

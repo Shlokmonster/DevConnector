@@ -35,14 +35,12 @@ const Sidebar = ({ isSidebarOpen }) => {
               </Link>
             </li>
             <li>
-            <Link to="/github-repos" className="link">
+            <Link to="/all-profiles" className="link">
               <button className="nav1-button">
                 <i className="fas fa-users icon"></i>
-                 <a>
-                  Developers
-                </a>
+                <span>Developers</span>
               </button>
-              </Link>
+            </Link>
             </li>
             <li>
             <Link to="/github-repos" className="link">

@@ -16,7 +16,8 @@ const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173"],
+  origin: ["http://localhost:5173","http://localhost:5174"],
+  
   credentials: true,
 }));
 app.use(express.json());
@@ -187,6 +188,24 @@ app.put("/api/profile", verifySupabaseJWT, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+//  fetching all the users
+app.get("/api/profiles", async(req,res)=>{
+  try {
+    const profiles = await Profile.find().sort({ createdAt: -1 });
+    res.json(profiles);
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Failed to fetch profiles" });
+  }
+})
+
+
+
+
+
+
 
 // Ping route
 app.get("/", (req, res) => {
